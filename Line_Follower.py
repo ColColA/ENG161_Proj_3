@@ -44,14 +44,14 @@ def main():
   try: 
     while True:
       try: 
-        while curValue == 0:
+        while lineValue == 0:
           # update and read the values of the lineFinder
           lineValue = lineFinder.value
           uValue = ultra.value
 
-          if (uValue != None and value < 13):
+          if (uValue != None and uValue < 13):
             stop()
-            while value < 18:
+            while uValue < 18:
               driveStart(-50, -50)
             stop()
             drive(-50, 50, 2500)
@@ -63,18 +63,18 @@ def main():
           print("Ultrasonic value: {}".format(uValue))
 
           time.sleep(0.1)
-      drive(50, 0, 750)
-      lineValue = lineFinder.value
-      if lineValue == 1:
-        continue
-      drive(0, 50, 1500)
-      lineValue = lineFinder.value
-      if lineValue == 1:
-        continue
+        drive(50, 0, 750)
+        lineValue = lineFinder.value
+        if lineValue == 1:
+          continue
+        drive(0, 50, 1500)
+        lineValue = lineFinder.value
+        if lineValue == 1:
+          continue
       except IOError:
         print ("\nError occurred while attempting to read values.")
         stop()
-        break
+      break
 
   except KeyboardInterrupt:
     print("\nCtrl+C detected. Exiting...")

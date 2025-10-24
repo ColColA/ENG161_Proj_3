@@ -6,16 +6,16 @@
 # More info and instruction on using this sensor can be found in the basehat folder
 # on your Pi's Desktop 
 
-from basehat import LineFinder, UltrasonicSensor
+from basehat import LightSensor, UltrasonicSensor
 from buildhat import Motor
 import time
 
-uPin = 5
+# uPin = 5
 
 motorL = Motor('A')
 motorR = Motor('B')
 
-ultra = UltrasonicSensor(uPin)
+# ultra = UltrasonicSensor(uPin)
 
 def drive(rSpeed, lSpeed, time):
   motorR.start(rSpeed)
@@ -36,46 +36,53 @@ def stop():
 
 def main():
   # set the pin to be used
-  pin = 5
+  pinL = 0
+  pinR = 0
 
   # Initializing the sensor so the function within the class can be used
-  lineFinder = LineFinder(pin)
+  lightSensorL = LightSensor(pinL)
+  lightSensorR = LightSensor(pinR)
+
+  lightL = lightSensorL.light
+  lightR = lightSensorR.light
+
+  avgL = 0;
+  avgR = 0;
+
+  for i in range(0,100):
+    lightL = lightSensorL.light
+    lightR = lightSensorR.light
+
+    avgL += lightL
+    avgR += lightR
+
+    time.sleep(0.01)
+  
+  avgL = avgL/100
+  avgR = avgR/100
 
   try: 
     while True:
       try: 
-        while lineValue == 0:
-          # update and read the values of the lineFinder
-          lineValue = lineFinder.value
-          uValue = ultra.value
+        lightL = lightSensorL.light
+        lightR = lightSensorR.light
+        print(f'avgL = {avgL}, curL = {lightL}')
+        print(f'avgR = {avgR}, curR = {lightR}')
 
-          if (uValue != None and uValue < 13):
-            stop()
-            while uValue < 18:
-              driveStart(-50, -50)
-            stop()
-            drive(-50, 50, 2500)
-          else: 
-            driveStart(50,50)
+        # update and read the values of the lineFinder
+        lightL = lightSensorL.light
+        lightR = lightSensorR.light
+        # uValue = ultra.value
+        
+        rSpeed = 70-70*(avgR-lightR)/avgR
+        lSpeed = 70-70*(avgL-lightL)/avgL
 
-          # print values
-          print("LineFinder value: {}".format(lineValue))
-          print("Ultrasonic value: {}".format(uValue))
+        driveStart(rSpeed,lSpeed)
 
-          time.sleep(0.1)
-        drive(50, 0, 750)
-        lineValue = lineFinder.value
-        if lineValue == 1:
-          continue
-        drive(0, 50, 1500)
-        lineValue = lineFinder.value
-        if lineValue == 1:
-          continue
+        time.sleep(0.05)
       except IOError:
         print ("\nError occurred while attempting to read values.")
         stop()
-      break
-
   except KeyboardInterrupt:
     print("\nCtrl+C detected. Exiting...")
     stop()

@@ -6,16 +6,13 @@
 # More info and instruction on using this sensor can be found in the basehat folder
 # on your Pi's Desktop 
 
-from basehat import LightSensor, UltrasonicSensor
-from buildhat import Motor
+from buildhat import Motor, ColorSensor
 import time
-
-# uPin = 5
 
 motorL = Motor('A')
 motorR = Motor('B')
+colorSensor = ColorSensor('C')
 
-# ultra = UltrasonicSensor(uPin)
 
 def drive(rSpeed, lSpeed, time):
   motorR.start(rSpeed)
@@ -35,51 +32,59 @@ def stop():
   motorL.stop()
 
 def main():
-  # set the pin to be used
-  pinL = 0
-  pinR = 0
+  curTime = time.perf_counter()
+  # # set the pin to be used
+  # pinL = 0
+  # pinR = 0
 
-  # Initializing the sensor so the function within the class can be used
-  lightSensorL = LightSensor(pinL)
-  lightSensorR = LightSensor(pinR)
+  # # Initializing the sensor so the function within the class can be used
+  # lightSensorL = LightSensor(pinL)
+  # lightSensorR = LightSensor(pinR)
 
-  lightL = lightSensorL.light
-  lightR = lightSensorR.light
+  # lightL = lightSensorL.light
+  # lightR = lightSensorR.light
 
-  avgL = 0;
-  avgR = 0;
+  # avgL = 0;
+  # avgR = 0;
 
-  for i in range(0,100):
-    lightL = lightSensorL.light
-    lightR = lightSensorR.light
+  # for i in range(0,100):
+  #   lightL = lightSensorL.light
+  #   lightR = lightSensorR.light
 
-    avgL += lightL
-    avgR += lightR
+  #   avgL += lightL
+  #   avgR += lightR
 
-    time.sleep(0.01)
+  #   time.sleep(0.01)
   
-  avgL = avgL/100
-  avgR = avgR/100
+  # avgL = avgL/100
+  # avgR = avgR/100
 
   try: 
     while True:
       try: 
-        lightL = lightSensorL.light
-        lightR = lightSensorR.light
-        print(f'avgL = {avgL}, curL = {lightL}')
-        print(f'avgR = {avgR}, curR = {lightR}')
+        # lightL = lightSensorL.light
+        # lightR = lightSensorR.light
+        # print(f'\navgL = {avgL}, curL = {lightL} ---- avgR = {avgR}, curR = {lightR}')
 
-        # update and read the values of the lineFinder
-        lightL = lightSensorL.light
-        lightR = lightSensorR.light
-        # uValue = ultra.value
+        # # update and read the values of the lineFinder
+        # lightL = lightSensorL.light
+        # lightR = lightSensorR.light
+        # # uValue = ultra.value
         
-        rSpeed = 70-70*(avgR-lightR)/avgR
-        lSpeed = 70-70*(avgL-lightL)/avgL
+        # rSpeed = 30-40*(avgR-lightR)/avgR
+        # lSpeed = 30-40*(avgL-lightL)/avgL
+        color = colorSensor.get_color_rgbi
+        while color[3] < 130:
+          color = colorSensor.get_color_rgbi
 
-        driveStart(rSpeed,lSpeed)
+          driveStart(50,50)
 
-        time.sleep(0.05)
+          time.sleep(0.05)
+          curTime = time.perf_counter()
+        if (time.perf_counter() - curTime < 1000):
+          driveStart(50,-50)
+        elif (time.perf_counter() - curTime < 3000):
+          driveStart(-50,50)
       except IOError:
         print ("\nError occurred while attempting to read values.")
         stop()

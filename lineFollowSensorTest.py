@@ -2,26 +2,26 @@
 
 # Created by Colin Adreani on 10/25/2025
 
-from basehat import LineFinder, ColorSensor
+from basehat import LineFinder
 import time
 
 # set the pin to be used
 pinL = 5
-pinC = 'C'
+pinR = 5
 
 # Initializing the sensor so the function within the class can be used
-lineSensor = lineFinder(pinL)
-colorSensor = ColorSensor(pinC)
+lineSensorL = lineFinder(pinL)
+lineSensorR = lineFinder(pinR)
 
 try:
   while True:
-    line = lineSensor.value
-    color = colorSensor.get_color_hsv()
+    lineL = lineSensorL.value
+    lineR = lineSensorR.value
 
-    print(f'\ndiffL = {line} ---- diffR = {color}')
+    print(f'\n Right Line = {lineL}, Left Line = {lineR}')
 
-    rSpeed = 30 if line else 70
-    lSpeed = 30 if line else 70
+    rSpeed = 30 if lineR else 70
+    lSpeed = 30 if lineL else 70
 
     print(f'rSpeed = {rSpeed}, lSpeed = {lSpeed}')
 

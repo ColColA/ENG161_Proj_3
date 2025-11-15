@@ -3,25 +3,19 @@
 # Cruise Control Program for DC 2
 # ------------------------------------------
 
-from basehat import Button
-from buildhat import Motor
+from buildhat import Motor, IMUSensor
 import time
 
 DIAMETER = 3.25
 PI = 3.14
 CIRCUMFERENCE = DIAMETER * PI
 
-uPin = 5
-button_port = 22 # assign button sensor for D22
-
-button = Button(button_port)
 motorR = Motor('A')
 motorL = Motor('B')
+motorG = Motor('C')
 
-# Before button is pressed, your program will be stuck in this loop
-print("Press button on port 22 to run motors")
-button.wait_for_press()
-print("Starting...")
+# Initializing the IMU so the example can utilize the sensor
+IMU = IMUSensor()
 
 def drive(rSpeed, lSpeed, setTime):
   motorR.start(rSpeed)
@@ -31,6 +25,12 @@ def drive(rSpeed, lSpeed, setTime):
 
   motorR.stop()
   motorL.stop()
+
+def gate(gateBool):
+  if gateBool:
+    motorG.run_for_degrees(90, 50)
+  else:
+    motorG.run_for_degrees(-90, 50)
 
 def driveStart(rSpeed, lSpeed):
   motorR.start(rSpeed)
@@ -61,13 +61,23 @@ def pDrive(maxSpeed):
 
     driveStart(rSpeed, lSpeed)
 
+def gyroDrive(speed, heading, gZ):
+  kp = 1
+
+  rSpeed = speed + kp*(heading - gZ)
+  lSpeed = speed + kp*(heading - gZ)
+
+  driveStart(rSpeed, lSpeed)
+
 # Main logic    
 try:
     while True:
         #PUT YOUR LOGIC HERE
         #this infinite loop can be interrupted by ctrl+c a.k.a. keyboardInterrupt 
-        maxSpeed = 1.969
-        pDrive(maxSpeed)
+        # driveStart(50, 50)
+        x, y, z = IMU.getGyro()
+
+        gyroDrive(20, 0, z)
 
 except IOError as error:
     print(error)
@@ -78,4 +88,3 @@ except TypeError as error:
 except KeyboardInterrupt:
     print("You pressed ctrl+C...")
     stop()
-

@@ -28,9 +28,9 @@ def drive(rSpeed, lSpeed, setTime):
 
 def gate(gateBool):
   if gateBool:
-    motorG.run_for_degrees(90, 50)
+    motorG.run_for_degrees(-87, 50)
   else:
-    motorG.run_for_degrees(-90, 50)
+    motorG.run_for_degrees(90, 50)
 
 def driveStart(rSpeed, lSpeed):
   motorR.start(rSpeed)
@@ -61,11 +61,11 @@ def pDrive(maxSpeed):
 
     driveStart(rSpeed, lSpeed)
 
-def gyroDrive(speed, heading, gZ):
-  kp = 1
+def gyroDrive(speed, gZ):
+  kp = 0.3
 
-  rSpeed = speed + kp*(heading - gZ)
-  lSpeed = speed + kp*(heading - gZ)
+  rSpeed = speed + kp*gZ
+  lSpeed = speed - kp*gZ
 
   driveStart(rSpeed, lSpeed)
 
@@ -77,7 +77,11 @@ try:
         # driveStart(50, 50)
         x, y, z = IMU.getGyro()
 
-        gyroDrive(20, 0, z)
+        # gyroDrive(20, z)
+        gate(True)
+        time.sleep(2)
+        gate(False)
+        time.sleep(2)
 
 except IOError as error:
     print(error)

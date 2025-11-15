@@ -14,17 +14,19 @@ import time
 pinL = 26
 pinR = 18
 
-motorL = Motor('A')
-motorR = Motor('B')
-motorG = Motor('C')
+motorR = Motor('A')
+motorL = Motor('B')
+motorG = Motor('D')
+
+IMU = IMUSensor()
 
 # Initializing the sensor so the function within the class can be used
 lineSensorL = LineFinder(pinL)
 lineSensorR = LineFinder(pinR)
 
 def drive(rSpeed, lSpeed, time):
-  motorR.start(-rSpeed)
-  motorL.start(lSpeed)
+  motorR.start(rSpeed)
+  motorL.start(-lSpeed)
 
   time.sleep(time/1000)
 
@@ -32,8 +34,8 @@ def drive(rSpeed, lSpeed, time):
   motorL.stop()
 
 def driveStart(rSpeed, lSpeed):
-  motorR.start(-rSpeed)
-  motorL.start(lSpeed)
+  motorR.start(rSpeed)
+  motorL.start(-lSpeed)
 
 def stop():
   motorR.stop()
@@ -60,15 +62,22 @@ def main():
         # Reading IMU magnet values
         mX, mY, mZ = IMU.getMag()
 
-        print(f'\n Right Line = {lineL}, Left Line = {lineR}')
-
-        # Sets one side of 
-        rSpeed = 5 if lineR else 20
-        lSpeed = 5 if lineL else 20
+        print(f'\n Right Line = {lineR}, Left Line = {lineL}')
+        
+        if lineL and not lineR:
+            motorR.start(35)
+            motorL.stop()
+            
+        elif lineR and not lineL:
+            motorR.stop()
+            motorL.start(-35)
+            
+        else:
+            rSpeed = 5
+            lSpeed = 5
+            driveStart(rSpeed,lSpeed)
 
         print(f'rSpeed = {rSpeed}, lSpeed = {lSpeed}, gyroReading = {gZ}')
-
-        driveStart(rSpeed,lSpeed)
 
         if (mX > 0) or (mY > 0) or (mZ > 0):
           gate(True)

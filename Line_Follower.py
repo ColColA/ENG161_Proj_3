@@ -73,13 +73,14 @@ def main():
             motorL.start(-35)
             
         else:
-            rSpeed = 5
-            lSpeed = 5
+            rSpeed = 10
+            lSpeed = 10
             driveStart(rSpeed,lSpeed)
 
         print(f'rSpeed = {rSpeed}, lSpeed = {lSpeed}, gyroReading = {gZ}')
 
-        if (mX > 0) or (mY > 0) or (mZ > 0):
+        if mZ > 1000:
+          time.sleep(1)
           gate(True)
           time.sleep(1)
           gate(False)

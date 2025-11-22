@@ -8,14 +8,14 @@
 
 from basehat import LineFinder, IMUSensor, Button
 from buildhat import Motor
-import time
+import time, math
 
 # set the pins to be used
 pinL = 26
 pinR = 18
 
-pinBL = 5
-pinBR = 22
+pinBL = 22
+pinBR = 5
 
 # Define object instances of used electronics and define port
 motorR = Motor('A')
@@ -29,6 +29,9 @@ buttonR = Button(pinBR)
 
 lineSensorL = LineFinder(pinL)
 lineSensorR = LineFinder(pinR)
+
+# variable to store the order of turns after startup
+turnSequence = []
 
 # General time-based drive code for hardcoding paths
 def drive(rSpeed, lSpeed, time):
@@ -54,53 +57,71 @@ def stop():
 def turnTillLine(dir):
   # Keeps track of what has been found
   flag = False
+  
+  # Updates sensor values within scope of function
+  lineL = lineSensorL.value
+  lineR = lineSensorR.value
 
   # Repeat until line is found
-  while True:
+  while lineL != 0 or lineR != 0 or not flag:
     # Updates sensor values within scope of function
     lineL = lineSensorL.value
     lineR = lineSensorR.value
+
+    print(f'Status: LineL: {lineL}, LineR: {lineR}, Flag: {flag}')
 
     # Turns to the left
     if dir.upper() == 'L' or dir.upper() == "LEFT":
 
       # Continuously drives to the left while looking for path
+      driveStart(10, -10)
+      
+    # Turns to the right
+    elif dir.upper() == 'R' or dir.upper() == "RIGHT":
+
+      # Continuously drives to the right while looking for path
       driveStart(-10, 10)
 
-      # Flips the flag if it leaves the line
-      if lineL != lineR and flag == False:
-        flag == True
-
-      # Ends once it is locked onto the line
-      if lineL == 0 and lineR == 0 and flag == True:
-        break
-
-    # Turns to the Right
-    if dir.upper() == 'R' or dir.upper() == "RIGHT":
-      
-      # Continuously drives to the right while looking for path
-      driveStart(10, -10)
-
-      # Flips the flag if it leaves the line
-      if lineL != lineR and flag == False:
-        flag == True
-
-      # Ends once it is locked onto the line
-      if lineL == 0 and lineR == 0 and flag == True:
-        break
+    # Flips the flag if it leaves the line
+    if lineL != lineR and flag == False:
+      flag = True
+  turnSequence.pop(0)
 
 # Opens and closes gate
 def gate(gateBool):
   if gateBool:
-    motorG.run_for_degrees(90, 30)
+    motorG.run_for_degrees(85, 30)
   else:
-    motorG.run_for_degrees(-90, 30)
+    motorG.run_for_degrees(-85, 30)
+
 
 # Main Loop for running code
 def main():
+  # Sets up callback functions to update turnSequence when buttons are pressed
+  buttonL.when_released = lambda: turnSequence.append("L")
+  buttonR.when_released = lambda: turnSequence.append("R")
+
+  isStartup = True
   try: 
     while True:
       try: 
+        
+        while isStartup:
+            
+          # Reading button sensor values
+          bValueL = buttonL.value
+          bValueR = buttonR.value
+
+          print(f'\nTurn Sequence: {turnSequence}')
+          
+          # Checks if both are down, and if so it continues
+          if bValueL == 1 and bValueR == 1:
+            time.sleep(1)
+            isStartup = False
+            turnSequence.pop()
+            turnSequence.pop()
+          
+          time.sleep(0.2)
 
         # Reading line sensor values
         lineL = lineSensorL.value
@@ -116,7 +137,7 @@ def main():
 
         # Detects junction and turns right
         if lineL == 1 and lineR == 1:
-          turnTillLine("R")
+          turnTillLine(turnSequence[0])
 
         # Detects devation to the right and corrects
         elif lineL and not lineR:
@@ -130,8 +151,8 @@ def main():
         
         # Runs motors forward when driving
         else:
-            rSpeed = 10
-            lSpeed = 10
+            rSpeed = 20
+            lSpeed = 20
             driveStart(rSpeed,lSpeed)
 
         # Prints status

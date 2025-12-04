@@ -33,6 +33,7 @@ lineSensorR = LineFinder(pinR)
 # variable to store the order of turns after startup
 turnSequence = []
 
+
 # General time-based drive code for hardcoding paths
 def drive(rSpeed, lSpeed, time):
   motorR.start(rSpeed)
@@ -54,7 +55,7 @@ def stop():
   motorL.stop()
 
 # Turn until it sees a line function for use in pathfinding
-def turnTillLine(dir):
+def turnTillLine(direction):
   # Keeps track of what has been found
   flag = False
   
@@ -62,7 +63,7 @@ def turnTillLine(dir):
   lineL = lineSensorL.value
   lineR = lineSensorR.value
 
-  while True:
+  while lineL or lineR:
     # Updates sensor values within scope of function
     lineL = lineSensorL.value
     lineR = lineSensorR.value
@@ -83,16 +84,16 @@ def turnTillLine(dir):
     lineR = lineSensorR.value
 
     # Turns to the left
-    if dir.upper() == 'L' or dir.upper() == "LEFT":
+    if direction.upper() == 'L' or direction.upper() == "LEFT":
 
       # Continuously drives to the left while looking for path
-      driveStart(35, 10)
+      driveStart(20, 0)
       
     # Turns to the right
-    elif dir.upper() == 'R' or dir.upper() == "RIGHT":
+    elif direction.upper() == 'R' or direction.upper() == "RIGHT":
 
       # Continuously drives to the right while looking for path
-      driveStart(10, 35)
+      driveStart(0, 20)
 
   # drive(20, 20, 1000)
 

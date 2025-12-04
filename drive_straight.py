@@ -75,15 +75,26 @@ def gyroDrive(speed, gZ):
 
 # Main logic    
 try:
+    flag = False
     while True:
         #PUT YOUR LOGIC HERE
-        #this infinite loop can be interrupted by ctrl+c a.k.a. keyboardInterrupt 
-        # driveStart(50, 50)
+        #this infinite loop can be interrupted by ctrl+c a.k.a. keyboardInterrupt
+        
         x, y, z = IMU.getGyro()
         
         mX, mY, mZ = IMU.getMag()
+        
+        if (motorR.get_speed() + motorR.get_speed())/2 == 10 and flag == False:
+            flag = True
 
-        gyroDrive(10, z)
+        if (motorR.get_speed() + motorR.get_speed())/2 < 5 and flag:
+            drive(-10, -10, 4000)
+            drive(50, 50, 4000)
+        else:
+            driveStart(10,10)
+        
+        print(motorR.get_speed(), motorR.get_speed())
+        
         
         if math.fabs(mZ) > 50:
           print("unloading")
@@ -92,7 +103,7 @@ try:
           gate(True)
           time.sleep(1.5)
           gate(False)
-        print(mZ, z)
+        #print(mZ, z)
         #gate(True)
         #print("open")
         #time.sleep(2)

@@ -62,29 +62,63 @@ def turnTillLine(dir):
   lineL = lineSensorL.value
   lineR = lineSensorR.value
 
-  # Repeat until line is found
-  while lineL != 0 or lineR != 0 or not flag:
+  while True:
     # Updates sensor values within scope of function
     lineL = lineSensorL.value
     lineR = lineSensorR.value
 
-    print(f'Status: LineL: {lineL}, LineR: {lineR}, Flag: {flag}')
+    if lineL and lineR:
+      lSpeed = 20
+      rSpeed = 20
+    else:
+      lSpeed = 20 if lineL else 0
+      rSpeed = 20 if lineR else 0
+
+    driveStart(rSpeed, lSpeed)
+
+  while lineL == lineR:
+    
+    # Updates sensor values within scope of function
+    lineL = lineSensorL.value
+    lineR = lineSensorR.value
 
     # Turns to the left
     if dir.upper() == 'L' or dir.upper() == "LEFT":
 
       # Continuously drives to the left while looking for path
-      driveStart(10, -10)
+      driveStart(35, 10)
       
     # Turns to the right
     elif dir.upper() == 'R' or dir.upper() == "RIGHT":
 
       # Continuously drives to the right while looking for path
-      driveStart(-10, 10)
+      driveStart(10, 35)
 
-    # Flips the flag if it leaves the line
-    if lineL != lineR and flag == False:
-      flag = True
+  # drive(20, 20, 1000)
+
+  # # Repeat until line is found
+  # while lineL != 0 or lineR != 0 or not flag:
+  #   # Updates sensor values within scope of function
+  #   lineL = lineSensorL.value
+  #   lineR = lineSensorR.value
+
+  #   print(f'Status: LineL: {lineL}, LineR: {lineR}, Flag: {flag}')
+
+  #   # Turns to the left
+  #   if dir.upper() == 'L' or dir.upper() == "LEFT":
+
+  #     # Continuously drives to the left while looking for path
+  #     driveStart(10, -10)
+      
+  #   # Turns to the right
+  #   elif dir.upper() == 'R' or dir.upper() == "RIGHT":
+
+  #     # Continuously drives to the right while looking for path
+  #     driveStart(-10, 10)
+
+  #   # Flips the flag if it leaves the line
+  #   if lineL != lineR and flag == False:
+  #     flag = True
   turnSequence.pop(0)
 
 # Opens and closes gate
@@ -102,11 +136,13 @@ def main():
   buttonR.when_released = lambda: turnSequence.append("R")
 
   isStartup = True
+  speedFlag = False
   try: 
     while True:
       try: 
         
         while isStartup:
+          stop()
             
           # Reading button sensor values
           bValueL = buttonL.value
@@ -115,7 +151,7 @@ def main():
           print(f'\nTurn Sequence: {turnSequence}')
           
           # Checks if both are down, and if so it continues
-          if bValueL == 1 and bValueR == 1:
+          if bValueL and bValueR:
             time.sleep(1)
             isStartup = False
             turnSequence.pop()
@@ -127,27 +163,24 @@ def main():
         lineL = lineSensorL.value
         lineR = lineSensorR.value
 
-        # Reading IMU gyro values
-        gX, gY, gZ = IMU.getGyro()
-
         # Reading IMU magnet values
         mX, mY, mZ = IMU.getMag()
 
         print(f'\n Right Line = {lineR}, Left Line = {lineL}')
 
         # Detects junction and turns right
-        if lineL == 1 and lineR == 1:
+        if lineL and lineR:
           turnTillLine(turnSequence[0])
 
         # Detects devation to the right and corrects
         elif lineL and not lineR:
-            motorR.start(35)
+            motorR.start(20)
             motorL.stop()
-            
+        
         # Detects devation to the right and corrects
         elif lineR and not lineL:
             motorR.stop()
-            motorL.start(-35)
+            motorL.start(-20)
         
         # Runs motors forward when driving
         else:
@@ -155,15 +188,25 @@ def main():
             lSpeed = 20
             driveStart(rSpeed,lSpeed)
 
-        # Prints status
-        print(f'rSpeed = {rSpeed}, lSpeed = {lSpeed}, gyroReading = {gZ}')
+            # if (motorR.get_speed()+motorR.get_speed())/2 == (rSpeed+lSpeed)/2 and speedFlag == False:
+            #   speedFlag = True
 
-        # Detects if magnetic goal marker is beneath robot and deploys payload
-        if math.fabs(mZ) > 50:
-          time.sleep(1)
-          gate(True)
-          time.sleep(1)
-          gate(False)
+            # if (motorR.get_speed()+motorR.get_speed())/2 < 5 and speedFlag:
+            #   drive(-10, -10, 4000)
+            #   drive(50, 50, 4000)
+            #   speedFlag = False
+            # else:
+            #   driveStart(rSpeed,lSpeed)
+
+        # Prints status
+        print(f'rSpeed = {rSpeed}, lSpeed = {lSpeed}, magReading = {mZ}')
+
+        # # Detects if magnetic goal marker is beneath robot and deploys payload
+        # if math.fabs(mZ) > 50:
+        #   time.sleep(1)
+        #   gate(True)
+        #   time.sleep(1)
+        #   gate(False)
 
 
         time.sleep(0.05)
@@ -178,4 +221,3 @@ def main():
 if __name__ == '__main__':
   main()
   stop()
-

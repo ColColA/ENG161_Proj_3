@@ -33,19 +33,39 @@ lineSensorR = LineFinder(pinR)
 # variable to store the order of turns after startup
 turnSequence = []
 
+class turnType:
+  @staticmethod
+  def openStraight():
+    print("\n\nGoing Left\n\n")
+    drive(-5, 25, 1000)
+  
+  @staticmethod
+  def openRight():
+    print("\n\nGoing Right\n\n")
+    drive(20, 10, 1000)
+
+  @staticmethod
+  def jointLeft():
+    print("\n\nGoing Straight\n\n")
+    drive(25, 5, 2000)
+
+  @staticmethod
+  def jointRight():
+    print("\n\nGoing Straight\n\n")
+    drive(5, 25, 2000)
 
 # General time-based drive code for hardcoding paths
-def drive(rSpeed, lSpeed, time):
+def drive(lSpeed, rSpeed, wt):
   motorR.start(rSpeed)
   motorL.start(-lSpeed)
 
-  time.sleep(time/1000)
+  time.sleep(wt/1000)
 
   motorR.stop()
   motorL.stop()
 
 # General motor start function, can be continuously updated
-def driveStart(rSpeed, lSpeed):
+def driveStart(lSpeed, rSpeed):
   motorR.start(rSpeed)
   motorL.start(-lSpeed)
 
@@ -54,73 +74,54 @@ def stop():
   motorR.stop()
   motorL.stop()
 
-# Turn until it sees a line function for use in pathfinding
-def turnTillLine(direction):
-  # Keeps track of what has been found
-  flag = False
+# # Turn until it sees a line function for use in pathfinding
+# def turnTillLine(direction):
+#   # Keeps track of what has been found
+#   flag = False
   
-  # Updates sensor values within scope of function
-  lineL = lineSensorL.value
-  lineR = lineSensorR.value
+#   # Updates sensor values within scope of function
+#   lineL = lineSensorL.value
+#   lineR = lineSensorR.value
 
-  while lineL or lineR:
-    # Updates sensor values within scope of function
-    lineL = lineSensorL.value
-    lineR = lineSensorR.value
+#   while lineL or lineR:
+#     # Updates sensor values within scope of function
+#     lineL = lineSensorL.value
+#     lineR = lineSensorR.value
 
-    if lineL and lineR:
-      lSpeed = 20
-      rSpeed = 20
-    else:
-      lSpeed = 20 if lineL else 0
-      rSpeed = 20 if lineR else 0
+#     if lineL and lineR:
+#       lSpeed = 20
+#       rSpeed = 20
+#     else:
+#       lSpeed = 20 if lineL else 0
+#       rSpeed = 20 if lineR else 0
 
-    driveStart(rSpeed, lSpeed)
+#     driveStart(lSpeed, rSpeed)
 
-  while lineL == lineR:
+#     print(f'LineL = {lineL}, LineR = {lineR}, first stage = {lineL and lineR}\n')
+
+#   while lineL == lineR:
     
-    # Updates sensor values within scope of function
-    lineL = lineSensorL.value
-    lineR = lineSensorR.value
+#     # Updates sensor values within scope of function
+#     lineL = lineSensorL.value
+#     lineR = lineSensorR.value
 
-    # Turns to the left
-    if direction.upper() == 'L' or direction.upper() == "LEFT":
+#     # Turns to the left
+#     if direction.upper() == 'L' or direction.upper() == "LEFT":
 
-      # Continuously drives to the left while looking for path
-      driveStart(20, 0)
+#       # Continuously drives to the left while looking for path
+#       driveStart(-10, 10)
+
+#       print(f'LineL = {lineL}, LineR = {lineR}, Turning Left\n')
+
       
-    # Turns to the right
-    elif direction.upper() == 'R' or direction.upper() == "RIGHT":
+#     # Turns to the right
+#     elif direction.upper() == 'R' or direction.upper() == "RIGHT":
 
-      # Continuously drives to the right while looking for path
-      driveStart(0, 20)
+#       # Continuously drives to the right while looking for path
+#       driveStart(10, -10)
 
-  # drive(20, 20, 1000)
-
-  # # Repeat until line is found
-  # while lineL != 0 or lineR != 0 or not flag:
-  #   # Updates sensor values within scope of function
-  #   lineL = lineSensorL.value
-  #   lineR = lineSensorR.value
-
-  #   print(f'Status: LineL: {lineL}, LineR: {lineR}, Flag: {flag}')
-
-  #   # Turns to the left
-  #   if dir.upper() == 'L' or dir.upper() == "LEFT":
-
-  #     # Continuously drives to the left while looking for path
-  #     driveStart(10, -10)
-      
-  #   # Turns to the right
-  #   elif dir.upper() == 'R' or dir.upper() == "RIGHT":
-
-  #     # Continuously drives to the right while looking for path
-  #     driveStart(-10, 10)
-
-  #   # Flips the flag if it leaves the line
-  #   if lineL != lineR and flag == False:
-  #     flag = True
-  turnSequence.pop(0)
+#       print(f'LineL = {lineL}, LineR = {lineR}, Turning Right\n')
+#   turnSequence.pop(0)
 
 # Opens and closes gate
 def gate(gateBool):
@@ -138,6 +139,9 @@ def main():
 
   isStartup = True
   speedFlag = False
+
+  lspeed = 0
+  rspeed = 0
   try: 
     while True:
       try: 
@@ -171,7 +175,20 @@ def main():
 
         # Detects junction and turns right
         if lineL and lineR:
-          turnTillLine(turnSequence[0])
+          try:
+            direction = turnSequence[0]
+
+            # Turns to the left
+            if direction.upper() == 'L': turnType.openStraight()
+          
+            # Turns to the right
+            elif direction.upper() == 'R':turnType.openRight()
+
+            turnSequence.pop(0)
+          except IndexError:
+            print ("\nError occurred while attempting to index values.")
+            stop()
+            break
 
         # Detects devation to the right and corrects
         elif lineL and not lineR:
@@ -203,7 +220,7 @@ def main():
         print(f'rSpeed = {rSpeed}, lSpeed = {lSpeed}, magReading = {mZ}')
 
         # # Detects if magnetic goal marker is beneath robot and deploys payload
-        # if math.fabs(mZ) > 50:
+        # if math.fabs(mZ) > 70:
         #   time.sleep(1)
         #   gate(True)
         #   time.sleep(1)

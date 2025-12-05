@@ -74,55 +74,6 @@ def stop():
   motorR.stop()
   motorL.stop()
 
-# # Turn until it sees a line function for use in pathfinding
-# def turnTillLine(direction):
-#   # Keeps track of what has been found
-#   flag = False
-  
-#   # Updates sensor values within scope of function
-#   lineL = lineSensorL.value
-#   lineR = lineSensorR.value
-
-#   while lineL or lineR:
-#     # Updates sensor values within scope of function
-#     lineL = lineSensorL.value
-#     lineR = lineSensorR.value
-
-#     if lineL and lineR:
-#       lSpeed = 20
-#       rSpeed = 20
-#     else:
-#       lSpeed = 20 if lineL else 0
-#       rSpeed = 20 if lineR else 0
-
-#     driveStart(lSpeed, rSpeed)
-
-#     print(f'LineL = {lineL}, LineR = {lineR}, first stage = {lineL and lineR}\n')
-
-#   while lineL == lineR:
-    
-#     # Updates sensor values within scope of function
-#     lineL = lineSensorL.value
-#     lineR = lineSensorR.value
-
-#     # Turns to the left
-#     if direction.upper() == 'L' or direction.upper() == "LEFT":
-
-#       # Continuously drives to the left while looking for path
-#       driveStart(-10, 10)
-
-#       print(f'LineL = {lineL}, LineR = {lineR}, Turning Left\n')
-
-      
-#     # Turns to the right
-#     elif direction.upper() == 'R' or direction.upper() == "RIGHT":
-
-#       # Continuously drives to the right while looking for path
-#       driveStart(10, -10)
-
-#       print(f'LineL = {lineL}, LineR = {lineR}, Turning Right\n')
-#   turnSequence.pop(0)
-
 # Opens and closes gate
 def gate(gateBool):
   if gateBool:
@@ -133,11 +84,17 @@ def gate(gateBool):
 
 # Main Loop for running code
 def main():
-  # Sets up callback functions to update turnSequence when buttons are pressed
-  buttonL.when_released = lambda: turnSequence.append("L")
-  buttonR.when_released = lambda: turnSequence.append("R")
+  sequenceA = [["OS", "JR", "OS", "OR", "OS", "JL", "JL"],[False, True]]
+  sequenceB = [["OS", "JR", "OS", "OS", "OR", "JS", "JL"],[False, False, True]]
+  sequenceC = [["OS", "JR", "OS", "OS", "OS", "JR", "JS"],[False, False, True]]
+  turnSequence = []
+
+  # # Sets up callback functions to update turnSequence when buttons are pressed
+  # buttonL.when_released = lambda: turnSequence.append("L")
+  # buttonR.when_released = lambda: turnSequence.append("R")
 
   isStartup = True
+  isButtonDown = False
   speedFlag = False
 
   lspeed = 0
@@ -148,20 +105,35 @@ def main():
         
         while isStartup:
           stop()
-            
+
           # Reading button sensor values
           bValueL = buttonL.value
           bValueR = buttonR.value
 
-          print(f'\nTurn Sequence: {turnSequence}')
-          
-          # Checks if both are down, and if so it continues
-          if bValueL and bValueR:
+          if bValueL and not bValueR and isButtonDown == False:
+            turnSequence = sequenceA
+            isButtonDown = True
+            isStartup = True
             time.sleep(1)
-            isStartup = False
-            turnSequence.pop()
-            turnSequence.pop()
-          
+            print(f'\nTurn Sequence: {turnSequence}')
+            break
+          elif not bValueL and bValueR and isButtonDown == False:
+            turnSequence = sequenceB
+            isButtonDown = True
+            isStartup = True
+            time.sleep(1)
+            print(f'\nTurn Sequence: {turnSequence}')
+            break
+          elif bValueL and bValueR and isButtonDown == False:
+            turnSequence = sequenceC
+            isButtonDown = True
+            isStartup = True
+            time.sleep(1)
+            print(f'\nTurn Sequence: {turnSequence}')
+            break
+          else:
+            isButtonDown = False 
+
           time.sleep(0.2)
 
         # Reading line sensor values
@@ -178,11 +150,13 @@ def main():
           try:
             direction = turnSequence[0]
 
-            # Turns to the left
-            if direction.upper() == 'L': turnType.openStraight()
-          
-            # Turns to the right
-            elif direction.upper() == 'R':turnType.openRight()
+            if direction.upper() == 'OS': turnType.openStraight()
+
+            elif direction.upper() == 'OR':turnType.openRight()
+
+            elif direction.upper() == 'JR':turnType.jointRight()
+
+            elif direction.upper() == 'JL':turnType.jointLeft()
 
             turnSequence.pop(0)
           except IndexError:

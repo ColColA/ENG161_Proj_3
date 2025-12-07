@@ -11,16 +11,15 @@ DIAMETER = 3.25
 PI = 3.14
 CIRCUMFERENCE = DIAMETER * PI
 
-motorR = Motor('A')
-motorL = Motor('B')
+motorL = Motor('A')
+motorR = Motor('B')
 motorG = Motor('D')
 
 # Initializing the IMU so the example can utilize the sensor
 IMU = IMUSensor()
 
-def drive(rSpeed, lSpeed, setTime):
-  motorR.start(rSpeed)
-  motorL.start(-lSpeed)
+def drive(lSpeed, rSpeed, setTime):
+  driveStart(lSpeed, rSpeed)
 
   time.sleep(setTime/1000)
 
@@ -29,11 +28,11 @@ def drive(rSpeed, lSpeed, setTime):
 
 def gate(gateBool):
   if gateBool:
-    motorG.run_for_degrees(-87, 10)
+    motorG.run_for_degrees(85, 10)
   else:
-    motorG.run_for_degrees(90, 10)
+    motorG.run_for_degrees(-85, 10)
 
-def driveStart(rSpeed, lSpeed):
+def driveStart(lSpeed, rSpeed):
   motorR.start(rSpeed)
   motorL.start(-lSpeed)
 
@@ -75,48 +74,36 @@ def gyroDrive(speed, gZ):
 
 # Main logic    
 try:
-    flag = False
-    while True:
-        #PUT YOUR LOGIC HERE
-        #this infinite loop can be interrupted by ctrl+c a.k.a. keyboardInterrupt
-        
-        x, y, z = IMU.getGyro()
-        
-        mX, mY, mZ = IMU.getMag()
-        
-        if (motorR.get_speed() + motorR.get_speed())/2 == 10 and flag == False:
-            flag = True
+  speed = 20
+  magFlag = False
+  turnSequence = [[],[True, True]]
+  while True:
+    #PUT YOUR LOGIC HERE
+    #this infinite loop can be interrupted by ctrl+c a.k.a. keyboardInterrupt
+    
+    mX, mY, mZ = IMU.getMag() 
 
-        if (motorR.get_speed() + motorR.get_speed())/2 < 5 and flag:
-            drive(-10, -10, 4000)
-            drive(50, 50, 4000)
-        else:
-            driveStart(10,10)
-        
-        print(motorR.get_speed(), motorR.get_speed())
-        
-        
-        if math.fabs(mZ) > 50:
-          print("unloading")
-          driveStart(20, 20)
-          time.sleep(1)
-          gate(True)
-          time.sleep(1.5)
-          gate(False)
-        #print(mZ, z)
-        #gate(True)
-        #print("open")
-        #time.sleep(2)
-        #gate(False)
-        #print("close")
-        #time.sleep(2)
+    driveStart(speed, speed)
+    
+    print(math.fabs(mZ))
+
+    # Detects if magnetic goal marker is beneath robot and deploys payload
+    if math.fabs(mZ) > 500 and magFlag == False:
+      magFlag = True
+      if turnSequence[1][0]:
+        gate(True)
+        speed = 100
+      turnSequence[1].pop(0)
+    elif math.fabs(mZ) < 150 and magFlag == True: 
+      magFlag = False
+      speed = 20
 
 except IOError as error:
-    print(error)
-    stop()
+  print(error)
+  stop()
 except TypeError as error:
-    print(error)
-    stop()
+  print(error)
+  stop()
 except KeyboardInterrupt:
-    print("You pressed ctrl+C...")
-    stop()
+  print("You pressed ctrl+C...")
+  stop()

@@ -14,8 +14,8 @@ import time, math
 pinL = 26
 pinR = 18
 
-pinBL = 22
-pinBR = 5
+pinBL = 5
+pinBR = 22
 
 # Define object instances of used electronics and define port
 motorL = Motor('A')
@@ -37,17 +37,17 @@ class turnType:
   @staticmethod
   def openStraight():
     print("\n\nGoing Straight\n\n")
-    drive(-5, 25, 2000)
+    drive(0, 30, 1500)
   
   @staticmethod
   def openRight():
     print("\n\nGoing Right\n\n")
-    drive(20, 0, 2000)
+    drive(30, 0, 2500)
 
   @staticmethod
   def openLeft():
     print("\n\nGoing Left\n\n")
-    drive(0, 20, 2000)
+    drive(0, 30, 2000)
 
   @staticmethod
   def jointLeft():
@@ -57,7 +57,7 @@ class turnType:
   @staticmethod
   def jointRight():
     print("\n\nIgnoring Right Branch\n\n")
-    drive(0, 25, 2000)
+    drive(0, 25, 2500)
   
   @staticmethod
   def bump():
@@ -74,10 +74,10 @@ class turnType:
 
       # Reading IMU gyro values
       gX, gY, gZ = IMU.getGyro()
-      
-      gX = math.fabs(gX)
 
       print(f'{gX}\n')
+      
+      gX = math.fabs(gX)
 
       if (gX > 50 and not frontWheelUp and frontWheelDown):
         print("front wheels over\n")
@@ -91,7 +91,7 @@ class turnType:
         print("back wheels over\n")
         backWheelUp = True
       
-      driveStart(50, 50)
+      driveStart(100, 100)
 
       # Detects devation to the right and corrects
       if lineL and not lineR and frontWheelDown:
@@ -108,7 +108,11 @@ def driveStart(lSpeed, rSpeed):
 
 # General time-based drive code for hardcoding paths
 def drive(lSpeed, rSpeed, wt):
+    
   driveStart(lSpeed, rSpeed)
+  
+  if lSpeed == 0: motorL.stop()
+  if rSpeed == 0: motorR.stop()
 
   time.sleep(wt/1000)
 
@@ -130,11 +134,11 @@ def gate(gateBool):
 
 # Main Loop for running code
 def main():
-  sequenceA = [["OS", "JR", "OS", "OR", "OS", "JL", "JL"],[False, True]]
-  sequenceB = [["OS", "JR", "OS", "OS", "OR", "JS", "JL"],[False, False, True]]
-  sequenceC = [["OS", "JR", "OS", "OS", "OS", "JR", "JS"],[False, False, True]]
-  test1 = [["BU", "OL", "JR"],[True, True, True]]
-  test3 = [["OS", "JR", "OR", "OR"],[False, True, True]]
+  sequenceA = [["BU", "OS", "JR", "OS", "OR", "OS", "JL", "JL", "JR"],[False, True]]
+  sequenceB = [["BU", "OS", "JR", "OS", "OS", "OR", "JS", "JL", "JR"],[False, False, True]]
+  sequenceC = [["BU", "OS", "JR", "OS", "OS", "OS", "JR", "JS", "JR"],[False, False, True]]
+  test1 = [["JL", "JL", "JL"],[True, True, True]]
+  test2 = [["OS", "OS", "JR", "JR"],[False, True, True]]
   turnSequence = []
 
   # # Sets up callback functions to update turnSequence when buttons are pressed
@@ -144,11 +148,14 @@ def main():
   isStartup = True
   isButtonDown = False
   magFlag = False
+  
+  magThreshold = 500
 
   lSpeed = 0
   rSpeed = 0
 
-  speed = 20
+  baseSpeed = 15
+  speed = baseSpeed
   try: 
     while True:
       try: 
@@ -163,22 +170,22 @@ def main():
 
           print("Looking For Sequence, Press a Button\n")
 
-          if bValueL and not bValueR and isButtonDown == False:
-            turnSequence = test1
+          if bValueL and bValueR and isButtonDown == False:
+            turnSequence = sequenceC
+            isButtonDown = True
+            isStartup = False
+            time.sleep(1)
+            print(f'\nTurn Sequence: {turnSequence}')
+            break
+          elif bValueL and not bValueR and isButtonDown == False:
+            turnSequence = sequenceA
             isButtonDown = True
             isStartup = False
             time.sleep(1)
             print(f'\nTurn Sequence: {turnSequence}')
             break
           elif not bValueL and bValueR and isButtonDown == False:
-            turnSequence = test1
-            isButtonDown = True
-            isStartup = False
-            time.sleep(1)
-            print(f'\nTurn Sequence: {turnSequence}')
-            break
-          elif bValueL and bValueR and isButtonDown == False:
-            turnSequence = sequenceC
+            turnSequence = sequenceB
             isButtonDown = True
             isStartup = False
             time.sleep(1)
@@ -229,13 +236,15 @@ def main():
 
         # Detects devation to the right and corrects
         elif lineL and not lineR:
-            motorR.start(speed)
+            motorR.start(min(speed*2, 100))
             motorL.stop()
+            motorL.start(speed-5)
         
         # Detects devation to the right and corrects
         elif lineR and not lineL:
+            motorL.start(-min(speed*2, 100))
             motorR.stop()
-            motorL.start(-speed)
+            motorR.start(-(speed-5))
         
         # Runs motors forward when driving
         else:
@@ -247,32 +256,21 @@ def main():
             else:
               driveStart(rSpeed,lSpeed)
 
-            # if (motorR.get_speed()+motorR.get_speed())/2 == (rSpeed+lSpeed)/2 and speedFlag == False:
-            #   speedFlag = True
-
-            # if (motorR.get_speed()+motorR.get_speed())/2 < 5 and speedFlag:
-            #   drive(-10, -10, 4000)
-            #   drive(50, 50, 4000)
-            #   speedFlag = False
-            # else:
-            #   driveStart(rSpeed,lSpeed)
-
         # Prints status
         print(f'rSpeed = {rSpeed}, lSpeed = {lSpeed}, magReading = {mZ}, aZ = {aZ}, gX = {math.fabs(gX)}')
 
         # Detects if magnetic goal marker is beneath robot and deploys payload
-        if math.fabs(mZ) > 500 and magFlag == False:
+        if math.fabs(mZ) > magThreshold and magFlag == False:
           magFlag = True
           if turnSequence[1][0]:
             gate(True)
             speed = 100
           turnSequence[1].pop(0)
-        elif math.fabs(mZ) < 500 and magFlag == True: 
+        elif math.fabs(mZ) < magThreshold and magFlag == True: 
           magFlag = False
-          speed = 20
+          speed = baseSpeed
 
-
-        time.sleep(0.05)
+        time.sleep(0.01)
       except IOError:
         print ("\nError occurred while attempting to read values.")
         stop()
